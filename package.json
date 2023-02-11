@@ -1,0 +1,22 @@
+{
+  "name": "test_task_for_hackolade",
+  "version": "1.0.0",
+  "description": "A little program that converts Cassandra db scheme to JSON Scheme",
+  "main": "index.js",
+  "scripts": {
+    "convert": "node ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dannleed/test_task.git"
+  },
+  "author": "Danylo Strelets",
+  "bugs": {
+    "url": "https://github.com/dannleed/test_task/issues"
+  },
+  "homepage": "https://github.com/dannleed/test_task#readme",
+  "dependencies": {
+    "cassandra-driver": "^4.6.4",
+    "dotenv": "^16.0.3"
+  }
+}
