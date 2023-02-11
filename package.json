@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "description": "A little program that converts Cassandra db scheme to JSON Scheme",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "convert": "node ."
+    "convert": "node .",
+    "seed": "node ./src/db/seed.js"
   },
   "repository": {
     "type": "git",
