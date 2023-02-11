@@ -8,6 +8,8 @@ services:
       - CASSANDRA_CLUSTER_NAME=MyCassandraCluster
       - CASSANDRA_DC=dc1
       - CASSANDRA_RACK=rack1
+      - CASSANDRA_USER=John
+      - CASSANDRA_PASSWORD=querty
     networks:
       - cassandra_network
 
