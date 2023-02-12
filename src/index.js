@@ -6,6 +6,9 @@ const cassandraRepository = new CassandraRepository(client);
 
 const cassandraSchema = await cassandraRepository.getSchema('hackolade');
 
-const jsonSchema = new CassandraToJSONSchema(cassandraSchema).toJSONSchema();
+const cassandraToJSONSchema = new CassandraToJSONSchema(cassandraSchema);
 
-console.log(JSON.stringify(jsonSchema, null, 2));
+const jsonSchema = cassandraToJSONSchema.toJSONSchema();
+
+console.log(JSON.stringify(jsonSchema, null, 4));
+process.exit(0);

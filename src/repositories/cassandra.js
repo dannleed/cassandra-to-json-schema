@@ -17,7 +17,7 @@ export class CassandraRepository {
 
   async getColumns(keyspaceName, tableName) {
     const result = await this.#executeQuery(
-      `SELECT column_name, type, kind FROM ${SYSTEM_SCHEMA}.columns WHERE keyspace_name = '${keyspaceName}' AND table_name = '${tableName}';`,
+      `SELECT column_name, type FROM ${SYSTEM_SCHEMA}.columns WHERE keyspace_name = '${keyspaceName}' AND table_name = '${tableName}';`,
     );
 
     return this.#extractRows(result, ['column_name', 'type', 'kind']);
