@@ -15,7 +15,7 @@ async function useKeyspace() {
 
 async function createTable() {
   await client.execute(`
-    CREATE TABLE IF NOT EXISTS users (
+    CREATE TABLE IF NOT EXISTS user (
       id uuid PRIMARY KEY,
       name text,
       surname text,
@@ -27,7 +27,7 @@ async function createTable() {
 
 async function insertData() {
   const query =
-    'INSERT INTO users (id, name, surname, age, address) VALUES (?, ?, ?, ?, ?) IF NOT EXISTS';
+    'INSERT INTO user (id, name, surname, age, address) VALUES (?, ?, ?, ?, ?) IF NOT EXISTS';
   const params = [
     '4acabb43-4f5e-46f2-8371-84668da81ad6',
     'John',
@@ -36,7 +36,7 @@ async function insertData() {
     '{"city":"Lviv","street":"Chornovola","house":59}',
   ];
   await client.execute(query, params, { prepare: true });
-  const result = await client.execute('SELECT * FROM users;');
+  const result = await client.execute('SELECT * FROM user;');
 
   console.table(result.rows);
   console.log('Data inserted successfully');

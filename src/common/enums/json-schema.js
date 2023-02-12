@@ -1,4 +1,4 @@
-const JSONSchemaDataType = Object.freeze({
+export const JSONSchemaDataType = Object.freeze({
   STRING: 'string',
   NUMBER: 'number',
   INTEGER: 'integer',
@@ -8,7 +8,7 @@ const JSONSchemaDataType = Object.freeze({
   NULL: 'null',
 });
 
-const JSONSchemaKey = Object.freeze({
+export const JSONSchemaKey = Object.freeze({
   $SCHEMA: '$schema',
   $REF: '$ref',
   TYPE: 'type',
@@ -17,4 +17,5 @@ const JSONSchemaKey = Object.freeze({
   PROPERTIES: 'properties',
   DEFINITIONS: 'definitions',
   ADDITIONAL_PROPERTIES: 'additionalProperties',
+  TITLE: 'title',
 });

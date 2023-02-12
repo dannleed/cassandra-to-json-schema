@@ -1,3 +1,5 @@
+import { JSONSchemaDataType } from './json-schema.js';
+
 export const CassandraDataType = Object.freeze({
   ASCII: 'ascii',
   BIGINT: 'bigint',
@@ -23,3 +25,29 @@ export const CassandraDataType = Object.freeze({
   VARCHAR: 'varchar',
   VARINT: 'varint',
 });
+
+export const cassandraToJSONTypeMap = {
+  [CassandraDataType.ASCII]: JSONSchemaDataType.STRING,
+  [CassandraDataType.BLOB]: JSONSchemaDataType.STRING,
+  [CassandraDataType.BOOLEAN]: JSONSchemaDataType.BOOLEAN,
+  [CassandraDataType.COUNTER]: JSONSchemaDataType.INTEGER,
+  [CassandraDataType.DATE]: JSONSchemaDataType.STRING,
+  [CassandraDataType.DECIMAL]: JSONSchemaDataType.NUMBER,
+  [CassandraDataType.DOUBLE]: JSONSchemaDataType.NUMBER,
+  [CassandraDataType.FLOAT]: JSONSchemaDataType.NUMBER,
+  [CassandraDataType.FROZEN]: JSONSchemaDataType.OBJECT,
+  [CassandraDataType.INET]: JSONSchemaDataType.STRING,
+  [CassandraDataType.INT]: JSONSchemaDataType.INTEGER,
+  [CassandraDataType.LIST]: JSONSchemaDataType.ARRAY,
+  [CassandraDataType.MAP]: JSONSchemaDataType.OBJECT,
+  [CassandraDataType.SET]: JSONSchemaDataType.ARRAY,
+  [CassandraDataType.SMALLINT]: JSONSchemaDataType.INTEGER,
+  [CassandraDataType.TIMESTAMP]: JSONSchemaDataType.STRING,
+  [CassandraDataType.TIME]: JSONSchemaDataType.STRING,
+  [CassandraDataType.TIMEUUID]: JSONSchemaDataType.STRING,
+  [CassandraDataType.TINYINT]: JSONSchemaDataType.INTEGER,
+  [CassandraDataType.TEXT]: JSONSchemaDataType.STRING,
+  [CassandraDataType.UUID]: JSONSchemaDataType.STRING,
+  [CassandraDataType.VARCHAR]: JSONSchemaDataType.STRING,
+  [CassandraDataType.VARINT]: JSONSchemaDataType.INTEGER,
+};
