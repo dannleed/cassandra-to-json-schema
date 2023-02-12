@@ -17,5 +17,6 @@ export const JSONSchemaKey = Object.freeze({
   PROPERTIES: 'properties',
   DEFINITIONS: 'definitions',
   ADDITIONAL_PROPERTIES: 'additionalProperties',
+  UNIQUE_ITEMS: 'uniqueItems',
   TITLE: 'title',
 });

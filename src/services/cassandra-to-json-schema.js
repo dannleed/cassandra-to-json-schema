@@ -1,4 +1,8 @@
-import { cassandraToJSONTypeMap } from '../common/enums/cassandra.js';
+import { CassandraUDTKeyword } from '../common/consts/cassandra.js';
+import {
+  CassandraDataType,
+  cassandraToJSONTypeMap,
+} from '../common/enums/cassandra.js';
 import {
   JSONSchemaDataType,
   JSONSchemaKey,
@@ -14,39 +18,60 @@ export class CassandraToJSONSchema {
     this.JSONSchemaVersion = 'http://json-schema.org/draft-04/schema#';
   }
 
-  toJSONSchema() {
-    const { tables } = this.cassandraSchema;
-    const schema = [];
+  checkType(columnType, type) {
+    return columnType.startsWith(type);
+  }
 
-    tables.forEach(table => {
-      const { name, columns, firstRow } = table;
+  checkIsJSONSerialized(firstRow, columnName, type) {
+    const isString = cassandraToJSONTypeMap[type] === JSONSchemaDataType.STRING;
+    const isObject = firstRow && isJSONSerialized(firstRow[columnName]);
 
-      const tableSchema = {
-        [JSONSchemaKey.$SCHEMA]: this.JSONSchemaVersion,
-        [JSONSchemaKey.TYPE]: JSONSchemaDataType.OBJECT,
-        [JSONSchemaKey.TITLE]: name,
-        [JSONSchemaKey.PROPERTIES]: {},
-      };
+    return isString && isObject;
+  }
 
-      for (const { column_name, type } of columns) {
-        const isString =
-          cassandraToJSONTypeMap[type] === JSONSchemaDataType.STRING;
-        const isObject = firstRow && isJSONSerialized(firstRow[column_name]);
+  convertSetToJSONSchema(columnType) {
+    const type = columnType.match(/<(\w+)>/)[1];
 
-        if (isString && isObject) {
-          tableSchema[JSONSchemaKey.PROPERTIES][column_name] =
-            this.convertObjectToJSONSchema(JSON.parse(firstRow[column_name]));
-        } else {
-          tableSchema[JSONSchemaKey.PROPERTIES][column_name] = {
-            [JSONSchemaKey.TYPE]: cassandraToJSONTypeMap[type],
-          };
-        }
-      }
+    return {
+      [JSONSchemaKey.TYPE]: JSONSchemaDataType.ARRAY,
+      [JSONSchemaKey.ITEMS]: {
+        [JSONSchemaKey.TYPE]: cassandraToJSONTypeMap[type],
+      },
+      [JSONSchemaKey.UNIQUE_ITEMS]: true,
+    };
+  }
 
-      schema.push(tableSchema);
-    });
+  convertListToJSONSchema(columnType) {
+    const type = columnType.match(/<(\w+)>/)[1];
 
-    return schema;
+    return {
+      [JSONSchemaKey.TYPE]: JSONSchemaDataType.ARRAY,
+      [JSONSchemaKey.ITEMS]: {
+        [JSONSchemaKey.TYPE]: cassandraToJSONTypeMap[type],
+      },
+    };
+  }
+
+  convertMapToJSONSchema(columnType) {
+    const type = columnType.match(/<(\w+), (\w+)>/)[2];
+
+    return {
+      [JSONSchemaKey.TYPE]: JSONSchemaDataType.OBJECT,
+      [JSONSchemaKey.ADDITIONAL_PROPERTIES]: {
+        [JSONSchemaKey.TYPE]: cassandraToJSONTypeMap[type],
+      },
+    };
+  }
+
+  convertTupleToJSONSchema(columnType) {
+    const types = columnType.match(/<(\w+), (\w+)>/).slice(1);
+
+    return {
+      [JSONSchemaKey.TYPE]: JSONSchemaDataType.ARRAY,
+      [JSONSchemaKey.ITEMS]: types.map(type => ({
+        [JSONSchemaKey.TYPE]: cassandraToJSONTypeMap[type],
+      })),
+    };
   }
 
   convertObjectToJSONSchema(object) {
@@ -67,5 +92,55 @@ export class CassandraToJSONSchema {
     }
 
     return result;
+  }
+
+  handleTypes(type, firstRow, columnName) {
+    if (this.checkType(type, CassandraDataType.SET)) {
+      return this.convertSetToJSONSchema(type);
+    }
+    if (this.checkType(type, CassandraDataType.LIST)) {
+      return this.convertListToJSONSchema(type);
+    }
+    if (this.checkType(type, CassandraDataType.MAP)) {
+      return this.convertMapToJSONSchema(type);
+    }
+    if (
+      this.checkType(type, `${CassandraUDTKeyword}<${CassandraDataType.TUPLE}`)
+    ) {
+      return this.convertTupleToJSONSchema(type);
+    }
+    if (this.checkIsJSONSerialized(firstRow, columnName, type)) {
+      return this.convertObjectToJSONSchema(JSON.parse(firstRow[columnName]));
+    } else {
+      return { [JSONSchemaKey.TYPE]: cassandraToJSONTypeMap[type] };
+    }
+  }
+
+  convertToJSONSchema() {
+    const { tables } = this.cassandraSchema;
+    const schema = [];
+
+    tables.forEach(table => {
+      const { name, columns, firstRow } = table;
+
+      const tableSchema = {
+        [JSONSchemaKey.$SCHEMA]: this.JSONSchemaVersion,
+        [JSONSchemaKey.TYPE]: JSONSchemaDataType.OBJECT,
+        [JSONSchemaKey.TITLE]: name,
+        [JSONSchemaKey.PROPERTIES]: {},
+      };
+
+      for (const { column_name, type } of columns) {
+        tableSchema[JSONSchemaKey.PROPERTIES][column_name] = this.handleTypes(
+          type,
+          firstRow,
+          column_name,
+        );
+      }
+
+      schema.push(tableSchema);
+    });
+
+    return schema;
   }
 }

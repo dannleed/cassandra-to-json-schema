@@ -8,7 +8,7 @@ const cassandraSchema = await cassandraRepository.getSchema('hackolade');
 
 const cassandraToJSONSchema = new CassandraToJSONSchema(cassandraSchema);
 
-const jsonSchema = cassandraToJSONSchema.toJSONSchema();
+const jsonSchema = cassandraToJSONSchema.convertToJSONSchema();
 
 console.log(JSON.stringify(jsonSchema, null, 4));
 process.exit(0);
