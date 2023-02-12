@@ -9,7 +9,7 @@ import {
 } from '../common/enums/json-schema.js';
 import { isJSONSerialized } from '../helpers/is-json-serialized.js';
 
-export class CassandraToJSONSchema {
+export class CassandraJSONSchemaConverter {
   cassandraSchema;
   JSONSchemaVersion;
 
@@ -29,7 +29,7 @@ export class CassandraToJSONSchema {
     return isString && isObject;
   }
 
-  convertSetToJSONSchema(columnType) {
+  setToJSONSchema(columnType) {
     const type = columnType.match(/<(\w+)>/)[1];
 
     return {
@@ -41,7 +41,7 @@ export class CassandraToJSONSchema {
     };
   }
 
-  convertListToJSONSchema(columnType) {
+  listToJSONSchema(columnType) {
     const type = columnType.match(/<(\w+)>/)[1];
 
     return {
@@ -52,7 +52,7 @@ export class CassandraToJSONSchema {
     };
   }
 
-  convertMapToJSONSchema(columnType) {
+  mapToJSONSchema(columnType) {
     const type = columnType.match(/<(\w+), (\w+)>/)[2];
 
     return {
@@ -63,7 +63,7 @@ export class CassandraToJSONSchema {
     };
   }
 
-  convertTupleToJSONSchema(columnType) {
+  tupleToJSONSchema(columnType) {
     const types = columnType.match(/<(\w+), (\w+)>/).slice(1);
 
     return {
@@ -74,7 +74,28 @@ export class CassandraToJSONSchema {
     };
   }
 
-  convertObjectToJSONSchema(object) {
+  udtToJSONSchema(columnType) {
+    if (columnType.match(CassandraDataType.TUPLE)) {
+      return;
+    }
+
+    const type = columnType.match(/<(\w+)>/)[1];
+
+    const udt = this.cassandraSchema.udts.find(udt => udt.name === type);
+
+    const result = {
+      [JSONSchemaKey.TYPE]: JSONSchemaDataType.OBJECT,
+      [JSONSchemaKey.PROPERTIES]: {},
+    };
+
+    for (const { name, type } of udt.fields) {
+      result[JSONSchemaKey.PROPERTIES][name] = this.handleTypes(type);
+    }
+
+    return result;
+  }
+
+  objectToJSONSchema(object) {
     const result = {
       [JSONSchemaKey.TYPE]: JSONSchemaDataType.OBJECT,
       [JSONSchemaKey.PROPERTIES]: {},
@@ -82,8 +103,7 @@ export class CassandraToJSONSchema {
 
     for (const [key, value] of Object.entries(object)) {
       if (typeof value === JSONSchemaDataType.OBJECT) {
-        result[JSONSchemaKey.PROPERTIES][key] =
-          this.convertObjectToJSONSchema(value);
+        result[JSONSchemaKey.PROPERTIES][key] = this.objectToJSONSchema(value);
       } else {
         result[JSONSchemaKey.PROPERTIES][key] = {
           [JSONSchemaKey.TYPE]: typeof value,
@@ -95,28 +115,31 @@ export class CassandraToJSONSchema {
   }
 
   handleTypes(type, firstRow, columnName) {
+    if (this.checkType(type, CassandraUDTKeyword)) {
+      return this.udtToJSONSchema(type);
+    }
     if (this.checkType(type, CassandraDataType.SET)) {
-      return this.convertSetToJSONSchema(type);
+      return this.setToJSONSchema(type);
     }
     if (this.checkType(type, CassandraDataType.LIST)) {
-      return this.convertListToJSONSchema(type);
+      return this.listToJSONSchema(type);
     }
     if (this.checkType(type, CassandraDataType.MAP)) {
-      return this.convertMapToJSONSchema(type);
+      return this.mapToJSONSchema(type);
     }
     if (
       this.checkType(type, `${CassandraUDTKeyword}<${CassandraDataType.TUPLE}`)
     ) {
-      return this.convertTupleToJSONSchema(type);
+      return this.tupleToJSONSchema(type);
     }
     if (this.checkIsJSONSerialized(firstRow, columnName, type)) {
-      return this.convertObjectToJSONSchema(JSON.parse(firstRow[columnName]));
+      return this.objectToJSONSchema(JSON.parse(firstRow[columnName]));
     } else {
       return { [JSONSchemaKey.TYPE]: cassandraToJSONTypeMap[type] };
     }
   }
 
-  convertToJSONSchema() {
+  toJSONSchema() {
     const { tables } = this.cassandraSchema;
     const schema = [];
 
@@ -141,6 +164,6 @@ export class CassandraToJSONSchema {
       schema.push(tableSchema);
     });
 
-    return schema;
+    return JSON.stringify(schema, null, 4);
   }
 }

@@ -31,12 +31,23 @@ export class CassandraRepository {
     return result.rows[0];
   }
 
+  async getUDTs(keyspaceName) {
+    const result = await this.#executeQuery(
+      `SELECT * FROM ${SYSTEM_SCHEMA}.types WHERE keyspace_name = '${keyspaceName}';`,
+    );
+
+    return result.rows;
+  }
+
   async getSchema(keyspaceName) {
     const tables = await this.getTables(keyspaceName);
+
+    const udts = await this.getUDTs(keyspaceName);
 
     const schema = {
       keyspace: keyspaceName,
       tables: [],
+      udts: [],
     };
 
     for (const table of tables) {
@@ -47,6 +58,16 @@ export class CassandraRepository {
         name: table,
         columns,
         firstRow,
+      });
+    }
+
+    for (const udt of udts) {
+      schema.udts.push({
+        name: udt.type_name,
+        fields: udt.field_names.map((fieldName, index) => ({
+          name: fieldName,
+          type: udt.field_types[index],
+        })),
       });
     }
 

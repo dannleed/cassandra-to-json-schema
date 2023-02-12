@@ -1,14 +1,20 @@
 import { client } from './db/connection.js';
+import { writeJSON } from './helpers/fs.js';
 import { CassandraRepository } from './repositories/cassandra.js';
-import { CassandraToJSONSchema } from './services/cassandra-to-json-schema.js';
+import { CassandraJSONSchemaConverter } from './services/cassandra-json-schema-converter.js';
 
-const cassandraRepository = new CassandraRepository(client);
+(async () => {
+  const cassandraRepository = new CassandraRepository(client);
 
-const cassandraSchema = await cassandraRepository.getSchema('hackolade');
+  const cassandraSchema = await cassandraRepository.getSchema('hackolade');
 
-const cassandraToJSONSchema = new CassandraToJSONSchema(cassandraSchema);
+  const cassandraJSONSchemaConverter = new CassandraJSONSchemaConverter(
+    cassandraSchema,
+  );
 
-const jsonSchema = cassandraToJSONSchema.convertToJSONSchema();
+  const jsonSchema = cassandraJSONSchemaConverter.toJSONSchema();
 
-console.log(JSON.stringify(jsonSchema, null, 4));
-process.exit(0);
+  await writeJSON(jsonSchema);
+
+  process.exit(0);
+})();
